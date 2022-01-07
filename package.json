@@ -1,0 +1,8 @@
+{
+  "name": "maoureu",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "author": "Gurimarukin",
+  "license": "MIT",
+  "private": false
+}
