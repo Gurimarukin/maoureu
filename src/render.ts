@@ -1,8 +1,7 @@
 import { apply } from 'fp-ts'
 import { flow, pipe } from 'fp-ts/function'
 
-import { DomHandler } from './helpers/DomHandler'
-import { BlogPage } from './models/BlogPage'
+import { postLinksFromBlogPage } from './helpers/postLinksFromBlogPage'
 import { Validation } from './models/Validation'
 import { FsUtils } from './utils/FsUtils'
 import { GotUtils } from './utils/GotUtils'
@@ -16,9 +15,9 @@ const main = (): Future<void> =>
     Future.chain(res => FsUtils.writeFile('output/toto.json', JSON.stringify(res))),
   )
 
-const fetchPosts = (): Future<unknown> => fetchPages()
+const fetchPosts = (): Future<unknown> => fetchPostLinks()
 
-const fetchPages = (): Future<BlogPage> =>
+const fetchPostLinks = (): Future<List<string>> =>
   pipe(
     fetchPageHtmlsRec(List.empty, 1),
     Future.chain(
@@ -31,8 +30,7 @@ const fetchPages = (): Future<BlogPage> =>
               nea,
               NonEmptyArray.mapWithIndex((i, pageHtml) =>
                 pipe(
-                  DomHandler(pageHtml),
-                  BlogPage.fromDomHandler,
+                  postLinksFromBlogPage(pageHtml),
                   Either.mapLeft(NonEmptyArray.map(s => `page ${i + 1}: ${s}`)),
                 ),
               ),
