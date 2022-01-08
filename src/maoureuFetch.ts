@@ -47,7 +47,7 @@ const fetchPostLinks = (): Future<List<string>> =>
 
 const fetchPageHtmlsRec = (acc: List<string>, page: number): Future<List<string>> =>
   pipe(
-    HttpUtils.getText(config.maoureu.urls.page(page)),
+    HttpUtils.getText(config.maoureu.urls.page(page), { cached: false }),
     Future.chain(pageHtml => fetchPageHtmlsRec([...acc, pageHtml], page + 1)),
     Future.orElse(e => {
       if (e instanceof HTTPError && e.response.statusCode === 404) {
@@ -119,7 +119,7 @@ const validateImages =
 
 const fetchPost = (url: string, postId: PostId): Future<Post> =>
   pipe(
-    HttpUtils.getText(url),
+    HttpUtils.getText(url, { cached: true }),
     Future.chain(postHtml =>
       pipe(
         Post.fromBlogPost({ html: postHtml, link: url, id: postId }),

@@ -9,22 +9,35 @@ import { FsUtils } from './FsUtils'
 import { StringUtils } from './StringUtils'
 import { Either, Future, Maybe } from './fp'
 
-const getText = (url: string): Future<string> => {
+type GetTextOpts = {
+  readonly cached: boolean
+}
+
+const getText = (url: string, { cached }: GetTextOpts): Future<string> => {
   const cleanedUrl = StringUtils.cleanFileName(url)
   const cachedFile = pipe(config.output.cache.dir, Dir.joinFile(`${cleanedUrl}.html`))
-  return pipe(
-    FsUtils.exists(cachedFile),
-    Future.chain(exists =>
-      exists
-        ? FsUtils.readFile(cachedFile)
-        : pipe(
-            getWithConsoleDebug(url),
-            Future.map(res => res.body),
-            Future.chainFirst(() => FsUtils.mkdir(config.output.cache.dir, { recursive: true })),
-            Future.chainFirst(body => FsUtils.writeFile(cachedFile, body)),
-          ),
-    ),
+
+  const fetch = pipe(
+    getWithConsoleDebug(url),
+    Future.map(res => res.body),
   )
+
+  if (cached) {
+    return pipe(
+      FsUtils.exists(cachedFile),
+      Future.chain(exists =>
+        exists
+          ? FsUtils.readFile(cachedFile)
+          : pipe(
+              fetch,
+              Future.chainFirst(() => FsUtils.mkdir(config.output.cache.dir, { recursive: true })),
+              Future.chainFirst(body => FsUtils.writeFile(cachedFile, body)),
+            ),
+      ),
+    )
+  }
+
+  return fetch
 }
 
 const getBuffer = (url: string): Future<Buffer> =>
