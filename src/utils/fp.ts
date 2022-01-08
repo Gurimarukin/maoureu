@@ -56,6 +56,14 @@ export const Maybe = {
   ...option,
   every: <A>(predicate: Predicate<A>): ((fa: Maybe<A>) => boolean) =>
     option.fold(() => true, predicate),
+  getUnsafe: <A>(fa: Maybe<A>): A =>
+    pipe(
+      fa,
+      option.getOrElseW(() => {
+        // eslint-disable-next-line functional/no-throw-statement
+        throw Error('No such element')
+      }),
+    ),
   toArray: maybeToArray,
   decoder: maybeDecoder,
   encoder: maybeEncoder,

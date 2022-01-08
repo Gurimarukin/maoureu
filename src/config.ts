@@ -17,6 +17,9 @@ export const config = {
   },
 
   maoureu: {
-    page: (i: number): string => `https://maour.eu/page/${i}`,
+    descriptionJson: 'description.json',
+    urls: {
+      page: (i: number): string => `https://maour.eu/page/${i}`,
+    },
   },
 }

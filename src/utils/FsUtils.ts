@@ -1,5 +1,6 @@
 import { pipe } from 'fp-ts/function'
 import fs from 'fs'
+import rimraf from 'rimraf'
 import type { Stream } from 'stream'
 
 import { FileOrDir } from '../models/FileOrDir'
@@ -23,6 +24,18 @@ const readdir = (dir: Dir): Future<List<FileOrDir>> =>
 const readFile = (file: File): Future<string> =>
   Future.tryCatch(() => fs.promises.readFile(file.path, { encoding: 'utf-8' }))
 
+const rmrf = (f: FileOrDir, options: rimraf.Options = {}): Future<void> =>
+  Future.tryCatch(
+    () =>
+      /* eslint-disable functional/no-return-void */
+      new Promise<void>((resolve, reject) =>
+        rimraf(f.path, options, (error: Error | null | undefined) =>
+          error === null ? resolve() : reject(error),
+        ),
+      ),
+    /* eslint-enable functional/no-return-void */
+  )
+
 const stat = (f: FileOrDir): Future<Maybe<fs.Stats>> =>
   pipe(
     Future.tryCatch(() => fs.promises.stat(f.path)),
@@ -45,6 +58,7 @@ export const FsUtils = {
   mkdir,
   readdir,
   readFile,
+  rmrf,
   stat,
   writeFile,
 }

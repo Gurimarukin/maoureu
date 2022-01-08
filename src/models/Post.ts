@@ -1,23 +1,41 @@
 import { apply, number, ord } from 'fp-ts'
 import type { Ord } from 'fp-ts/Ord'
 import { flow, pipe } from 'fp-ts/function'
+import * as C from 'io-ts/Codec'
 
 import { DomHandler } from '../helpers/DomHandler'
-import { Maybe, NonEmptyArray } from '../utils/fp'
+import { List, Maybe, NonEmptyArray } from '../utils/fp'
 import { Either } from '../utils/fp'
 import type { SrcSetDefinition } from '../utils/parseSrcset'
 import { parseSrcset } from '../utils/parseSrcset'
-import type { PostId } from './PostId'
+import { PostId } from './PostId'
 import { Validation, lift } from './Validation'
 
-export type Post = {
-  readonly id: PostId
-  readonly link: string
-  readonly date: string
-  readonly title: string
-  readonly paragraphs: NonEmptyArray<string>
-  readonly images: NonEmptyArray<string>
+export type PostImage = C.TypeOf<typeof postImageCodec>
+
+const postImageCodec = C.struct({
+  url: C.string,
+  fileName: C.string,
+})
+
+export const PostImage = {
+  codec: postImageCodec,
+  fromUrl: (url: string): PostImage => ({
+    url,
+    fileName: pipe(url.split('/'), List.last, Maybe.getUnsafe),
+  }),
 }
+
+export type Post = C.TypeOf<typeof codec>
+
+const codec = C.struct({
+  id: PostId.codec,
+  link: C.string,
+  date: C.string,
+  title: C.string,
+  paragraphs: NonEmptyArray.codec(C.string),
+  images: NonEmptyArray.codec(PostImage.codec),
+})
 
 type FromBlogPostArgs = {
   readonly html: string
@@ -69,32 +87,32 @@ const ordSrcSetDefinitionByWidth: Ord<SrcSetDefinition> = pipe(
   number.Ord,
   ord.contramap(({ width }) => width ?? 0),
 )
-const parseImages = (domHandler: DomHandler): Validation<NonEmptyArray<string>> =>
+const parseImages = (domHandler: DomHandler): Validation<NonEmptyArray<PostImage>> =>
   pipe(
     domHandler.document,
     DomHandler.querySelectorAllNonEmpty(
       'div.post-container noscript > img',
       domHandler.HTMLImageElement,
     ),
-    Either.map(
-      NonEmptyArray.mapWithIndex((i, img) =>
-        pipe(
-          parseSrcset(img.srcset),
-          Either.bimap(
-            e => `parseSrcset Error:\n${e.stack}\nsrcset: ${img.srcset}`,
-            flow(
-              NonEmptyArray.fromReadonlyArray,
-              Maybe.fold(
-                () => img.src, // if empty srcset, just use src
-                flow(NonEmptyArray.max(ordSrcSetDefinitionByWidth), ({ url }) => url),
-              ),
-            ),
-          ),
-          lift(`${i}`),
+    Either.map(NonEmptyArray.mapWithIndex(parseImage)),
+    Either.chain(([head, ...tail]) => apply.sequenceT(Validation.validation)(head, ...tail)),
+    Either.map(NonEmptyArray.map(PostImage.fromUrl)),
+  )
+
+const parseImage = (i: number, img: HTMLImageElement): Validation<string> =>
+  pipe(
+    parseSrcset(img.srcset),
+    Either.bimap(
+      e => `parseSrcset Error:\n${e.stack}\nsrcset: ${img.srcset}`,
+      flow(
+        NonEmptyArray.fromReadonlyArray,
+        Maybe.fold(
+          () => img.src, // if empty srcset, just use src
+          flow(NonEmptyArray.max(ordSrcSetDefinitionByWidth), ({ url }) => url),
         ),
       ),
     ),
-    Either.chain(([head, ...tail]) => apply.sequenceT(Validation.validation)(head, ...tail)),
+    lift(`${i}`),
   )
 
-export const Post = { fromBlogPost }
+export const Post = { codec, fromBlogPost }
