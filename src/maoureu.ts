@@ -106,7 +106,7 @@ const fetchPost = (url: string, postId: PostId): Future<Post> =>
       pipe(
         Post.fromBlogPost({ html: postHtml, link: url, id: postId }),
         Validation.toTry,
-        Either.mapLeft(e => Error(`${url}\n${e.message}`)),
+        Either.mapLeft(e => Error(`${url}\n${e.stack}`)),
         Future.fromEither,
       ),
     ),

@@ -1,9 +1,12 @@
-import { apply } from 'fp-ts'
-import { pipe } from 'fp-ts/function'
+import { apply, number, ord } from 'fp-ts'
+import type { Ord } from 'fp-ts/Ord'
+import { flow, pipe } from 'fp-ts/function'
 
 import { DomHandler } from '../helpers/DomHandler'
-import { NonEmptyArray } from '../utils/fp'
+import { Maybe, NonEmptyArray } from '../utils/fp'
 import { Either } from '../utils/fp'
+import type { SrcSetDefinition } from '../utils/parseSrcset'
+import { parseSrcset } from '../utils/parseSrcset'
 import type { PostId } from './PostId'
 import { Validation, lift } from './Validation'
 
@@ -60,6 +63,10 @@ const parseParagraphs = (domHandler: DomHandler): Validation<NonEmptyArray<strin
   )
 }
 
+const ordSrcSetDefinitionByWidth: Ord<SrcSetDefinition> = pipe(
+  number.Ord,
+  ord.contramap(({ width }) => width ?? 0),
+)
 const parseImages = (domHandler: DomHandler): Validation<NonEmptyArray<string>> =>
   pipe(
     domHandler.document,
@@ -67,7 +74,25 @@ const parseImages = (domHandler: DomHandler): Validation<NonEmptyArray<string>> 
       'div.post-container noscript > img',
       domHandler.HTMLImageElement,
     ),
-    Either.map(NonEmptyArray.map(img => img.srcset)),
+    Either.map(
+      NonEmptyArray.mapWithIndex((i, img) =>
+        pipe(
+          parseSrcset(img.srcset),
+          Either.bimap(
+            e => `parseSrcset Error:\n${e.stack}\nsrcset: ${img.srcset}`,
+            flow(
+              NonEmptyArray.fromReadonlyArray,
+              Maybe.fold(
+                () => img.src, // if empty srcset, just use src
+                flow(NonEmptyArray.max(ordSrcSetDefinitionByWidth), ({ url }) => url),
+              ),
+            ),
+          ),
+          lift(`${i}`),
+        ),
+      ),
+    ),
+    Either.chain(([head, ...tail]) => apply.sequenceT(Validation.validation)(head, ...tail)),
   )
 
 export const Post = { fromBlogPost }
