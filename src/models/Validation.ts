@@ -9,7 +9,11 @@ export type Validation<A> = Either<NonEmptyArray<string>, A>
 const validation = Either.getApplicativeValidation(NonEmptyArray.getSemigroup<string>())
 
 const toTry: <A>(validated: Validation<A>) => Try<A> = Either.mapLeft(
-  flow(StringUtils.mkString('Validation(\n', '\n', '\n)'), Error),
+  flow(
+    NonEmptyArray.map(e => `  ${e}`),
+    StringUtils.mkString('Validation(\n', '\n', '\n)'),
+    Error,
+  ),
 )
 
 export const Validation = { validation, toTry }

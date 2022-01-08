@@ -7,7 +7,7 @@
     "clean": "rm -fr dist/*",
     "prebuild": "yarn run clean",
     "build": "tsc",
-    "render": "ts-node src/render.ts",
+    "maoureu": "NODE_OPTIONS='--unhandled-rejections=strict' ts-node src/maoureu.ts",
     "prettier": "prettier --check src test",
     "prettierFix": "prettier --write src test",
     "lint": "eslint --cache --max-warnings 0 src test",
@@ -40,6 +40,8 @@
     "fp-ts": "^2.11.6",
     "got": "^11.8.3",
     "io-ts": "^2.2.16",
-    "jsdom": "^19.0.0"
+    "jsdom": "^19.0.0",
+    "monocle-ts": "^2.3.11",
+    "newtype-ts": "^0.3.4"
   }
 }
