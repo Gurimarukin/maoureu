@@ -1,10 +1,10 @@
 /* eslint-disable functional/no-return-void */
-import { DomUtils } from '../../src/utils/DomUtils'
+import { DomHandler } from '../../src/helpers/DomHandler'
 
 describe('instances', () => {
   it('should parse HTMLAnchorElement', () => {
-    const doc = DomUtils.documentFromHtml('<a href="blbl.ch">toto</a>')
+    const domHandler = DomHandler('<a href="blbl.ch">toto</a>')
 
-    expect(doc.querySelector('a')).toBeInstanceOf(doc)
+    expect(domHandler.document.querySelector('a')).toBeInstanceOf(domHandler.HTMLAnchorElement)
   })
 })

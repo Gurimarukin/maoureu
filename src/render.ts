@@ -1,9 +1,9 @@
 import { apply } from 'fp-ts'
 import { flow, pipe } from 'fp-ts/function'
 
+import { DomHandler } from './helpers/DomHandler'
 import { BlogPage } from './models/BlogPage'
 import { Validation } from './models/Validation'
-import { DomUtils } from './utils/DomUtils'
 import { FsUtils } from './utils/FsUtils'
 import { GotUtils } from './utils/GotUtils'
 import { StringUtils } from './utils/StringUtils'
@@ -31,8 +31,8 @@ const fetchPages = (): Future<BlogPage> =>
               nea,
               NonEmptyArray.mapWithIndex((i, pageHtml) =>
                 pipe(
-                  DomUtils.documentFromHtml(pageHtml),
-                  BlogPage.fromDocument,
+                  DomHandler(pageHtml),
+                  BlogPage.fromDomHandler,
                   Either.mapLeft(NonEmptyArray.map(s => `page ${i + 1}: ${s}`)),
                 ),
               ),

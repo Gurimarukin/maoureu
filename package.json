@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "clean": "rm -fr dist/*",
-    "prebuild": "yarn run checkEnv && yarn run clean",
+    "prebuild": "yarn run clean",
     "build": "tsc",
     "render": "ts-node src/render.ts",
     "prettier": "prettier --check src test",
