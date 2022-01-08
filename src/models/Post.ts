@@ -63,7 +63,10 @@ const parseParagraphs = (domHandler: DomHandler): Validation<NonEmptyArray<strin
 const parseImages = (domHandler: DomHandler): Validation<NonEmptyArray<string>> =>
   pipe(
     domHandler.document,
-    DomHandler.querySelectorAllNonEmpty('ul.slides > li > img', domHandler.HTMLImageElement),
+    DomHandler.querySelectorAllNonEmpty(
+      'div.post-container noscript > img',
+      domHandler.HTMLImageElement,
+    ),
     Either.map(NonEmptyArray.map(img => img.srcset)),
   )
 
