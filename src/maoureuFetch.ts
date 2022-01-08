@@ -1,9 +1,11 @@
-import { apply, json, predicate } from 'fp-ts'
+import { apply, predicate } from 'fp-ts'
 import { flow, pipe } from 'fp-ts/function'
 import { HTTPError } from 'got/dist/source'
 import path from 'path'
 
 import { config } from './config'
+import { getDescriptionFile } from './helpers/getDescriptionFile'
+import { parsePostFromDir } from './helpers/parsePostFromDir'
 import { postLinksFromBlogPage } from './helpers/postLinksFromBlogPage'
 import type { File } from './models/FileOrDir'
 import { Dir, FileOrDir } from './models/FileOrDir'
@@ -16,8 +18,6 @@ import { HttpUtils } from './utils/HttpUtils'
 import { JsonUtils } from './utils/JsonUtils'
 import { StringUtils } from './utils/StringUtils'
 import { Either, Future, List, Maybe, NonEmptyArray, Tuple } from './utils/fp'
-import { decodeError } from './utils/ioTsUtils'
-import { unknownToError } from './utils/unknownToError'
 
 const main = (): Future<void> =>
   pipe(
@@ -112,12 +112,7 @@ const fetchAndWritePosts = (postLinks: List<Tuple<string, PostId>>): Future<void
 
 const validateExistingPost = (postDir: Dir): Future<void> =>
   pipe(
-    FsUtils.readFile(getDescriptionFile(postDir)),
-    Future.map(json.parse),
-    Future.map(Either.mapLeft(unknownToError)),
-    Future.chain(Future.fromEither),
-    Future.map(u => pipe(Post.codec.decode(u), Either.mapLeft(decodeError('Post')(u)))),
-    Future.chain(Future.fromEither),
+    parsePostFromDir(postDir),
     Future.chain(post =>
       pipe(
         post.images,
@@ -183,9 +178,6 @@ const writePost =
 
 const getImageFile = (postDir: Dir, image: PostImage): File =>
   pipe(postDir, Dir.joinFile(image.fileName))
-
-const getDescriptionFile = (postDir: Dir): File =>
-  pipe(postDir, Dir.joinFile(config.maoureu.descriptionJson))
 
 // eslint-disable-next-line functional/no-expression-statement
 Future.runUnsafe(main())
