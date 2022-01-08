@@ -57,7 +57,9 @@ const parseParagraphs = (domHandler: DomHandler): Validation<NonEmptyArray<strin
     domHandler.document,
     DomHandler.querySelectorAllNonEmpty(selector, domHandler.HTMLParagraphElement),
     Either.map(
-      NonEmptyArray.mapWithIndex((i, p) => pipe(p, DomHandler.textContent(selector), lift(`${i}`))),
+      NonEmptyArray.mapWithIndex((i, p) =>
+        pipe(p, DomHandler.innerHTML(selector, { brToNewline: true }), lift(`${i}`)),
+      ),
     ),
     Either.chain(([head, ...tail]) => apply.sequenceT(Validation.validation)(head, ...tail)),
   )

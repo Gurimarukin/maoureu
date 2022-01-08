@@ -1,5 +1,5 @@
 import { apply, predicate } from 'fp-ts'
-import { pipe } from 'fp-ts/function'
+import { flow, pipe } from 'fp-ts/function'
 import { JSDOM } from 'jsdom'
 
 import { Validation } from '../models/Validation'
@@ -102,18 +102,41 @@ function querySelectorAllNonEmpty<E extends Element>(
   }
 }
 
-const textContent =
+const brRegex = /<br>/gi
+
+const getText =
+  (name: string, getter: (elt: HTMLElement) => string | null) =>
   (selector: string) =>
   (elt: HTMLElement): Either<string, string> =>
     pipe(
-      elt.textContent,
-      Either.fromNullable(`No textContent for element: ${selector}`),
+      getter(elt),
+      Either.fromNullable(`No ${name} for element: ${selector}`),
       Either.map(StringUtils.cleanHtml),
       Either.filterOrElse(
         predicate.not(looksLikeHTMLTag),
-        str => `textContent looks like an HTML tag and this might be a problem: ${str}`,
+        str => `${name} looks like an HTML tag and this might be a problem: ${str}`,
       ),
     )
+
+const textContent = getText('textContent', e => e.textContent)
+
+type InnerHTMLOpts = {
+  readonly brToNewline: boolean
+}
+
+const innerHTML = (
+  selector: string,
+  { brToNewline }: InnerHTMLOpts,
+): ((elt: HTMLElement) => Either<string, string>) => {
+  const res = getText('innerHTML', e => e.innerHTML)(selector)
+  if (brToNewline) {
+    return flow(
+      res,
+      Either.map(html => html.replace(brRegex, '\n')),
+    )
+  }
+  return res
+}
 
 const looksLikeHTMLTag = (str: string): boolean => str.startsWith('<') && str.endsWith('/>')
 
@@ -122,4 +145,5 @@ export const DomHandler = {
   querySelectorEnsureOne,
   querySelectorAllNonEmpty,
   textContent,
+  innerHTML,
 }
