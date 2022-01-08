@@ -1,14 +1,13 @@
-import { apply, predicate } from 'fp-ts'
+import { apply } from 'fp-ts'
 import { flow, pipe } from 'fp-ts/function'
 import { HTTPError } from 'got/dist/source'
-import path from 'path'
 
 import { config } from './config'
 import { getDescriptionFile } from './helpers/getDescriptionFile'
 import { parsePostFromDir } from './helpers/parsePostFromDir'
 import { postLinksFromBlogPage } from './helpers/postLinksFromBlogPage'
 import type { File } from './models/FileOrDir'
-import { Dir, FileOrDir } from './models/FileOrDir'
+import { Dir } from './models/FileOrDir'
 import type { PostImage } from './models/Post'
 import { Post } from './models/Post'
 import { PostId } from './models/PostId'
@@ -17,16 +16,9 @@ import { FsUtils } from './utils/FsUtils'
 import { HttpUtils } from './utils/HttpUtils'
 import { JsonUtils } from './utils/JsonUtils'
 import { StringUtils } from './utils/StringUtils'
-import { Either, Future, List, Maybe, NonEmptyArray, Tuple } from './utils/fp'
+import { Either, Future, List, Maybe, NonEmptyArray } from './utils/fp'
 
-const main = (): Future<void> =>
-  pipe(
-    Future.Do,
-    Future.apS('postLinks', fetchPostLinks()),
-    Future.apS('existingPosts', getExistingPosts()),
-    Future.map(({ postLinks, existingPosts }) => filteredPostLinks(postLinks, existingPosts)),
-    Future.chain(fetchAndWritePosts),
-  )
+const main = (): Future<void> => pipe(fetchPostLinks(), Future.chain(fetchAndWritePosts))
 
 const fetchPostLinks = (): Future<List<string>> =>
   pipe(
@@ -66,78 +58,64 @@ const fetchPageHtmlsRec = (acc: List<string>, page: number): Future<List<string>
     }),
   )
 
-const getExistingPosts = (): Future<List<PostId>> =>
+const fetchAndWritePosts = (postLinks: List<string>): Future<void> =>
   pipe(
-    FsUtils.mkdir(config.output.maoureu.posts.dir, { recursive: true }),
-    Future.chain(() => FsUtils.readdir(config.output.maoureu.posts.dir)),
-    Future.map(
-      flow(
-        List.filter(FileOrDir.isDir),
-        List.map(d => PostId.wrap(path.basename(d.path))),
+    postLinks,
+    Future.traverseSeqArray(fetchPostFromUrl),
+    Future.chain(posts =>
+      FsUtils.writeFile(
+        pipe(config.output.maoureu.postsJson),
+        JsonUtils.stringify(List.encoder(Post.codec))(posts),
       ),
     ),
   )
 
-const filteredPostLinks = (
-  postLinks: List<string>,
-  existingPosts: List<PostId>,
-): List<Tuple<string, PostId>> =>
+const fetchPostFromUrl = (url: string): Future<Post> =>
   pipe(
-    postLinks,
-    List.filterMap(url =>
-      pipe(
-        PostId.fromUrl(url),
-        Maybe.filter(predicate.not(id => pipe(existingPosts, List.elem(PostId.Eq)(id)))),
-        Maybe.map(postId => Tuple.of(url, postId)),
-      ),
+    PostId.fromUrl(url),
+    Maybe.fold(
+      () => Future.left(Error(`PostId.fromUrl was None: ${url}`)),
+      postId => {
+        const postDir = pipe(config.output.maoureu.posts.dir, Dir.joinDir(PostId.unwrap(postId)))
+        return pipe(
+          FsUtils.exists(postDir),
+          Future.chain(exists =>
+            exists
+              ? getExistingPost(postDir)
+              : pipe(fetchPost(url, postId), Future.chainFirst(writePost(postDir))),
+          ),
+        )
+      },
     ),
   )
 
-const fetchAndWritePosts = (postLinks: List<Tuple<string, PostId>>): Future<void> =>
-  pipe(
-    postLinks,
-    Future.traverseSeqArray(([url, postId]) => {
-      const postDir = pipe(config.output.maoureu.posts.dir, Dir.joinDir(PostId.unwrap(postId)))
-      return pipe(
-        FsUtils.exists(postDir),
-        Future.chain(exists =>
-          exists
-            ? validateExistingPost(postDir)
-            : pipe(fetchPost(url, postId), Future.chain(writePost(postDir))),
-        ),
-      )
-    }),
-    Future.map<List<void>, void>(() => undefined),
-  )
+const getExistingPost = (postDir: Dir): Future<Post> =>
+  pipe(parsePostFromDir(postDir), Future.chainFirst(validateImages(postDir)))
 
-const validateExistingPost = (postDir: Dir): Future<void> =>
-  pipe(
-    parsePostFromDir(postDir),
-    Future.chain(post =>
-      pipe(
-        post.images,
-        Future.traverseArray(image =>
-          pipe(
-            FsUtils.exists(getImageFile(postDir, image)),
-            Future.map(exists =>
-              exists
-                ? Maybe.none
-                : Maybe.some(`Missing expected image: ${image.fileName} - ${image.url}`),
-            ),
+const validateImages =
+  (postDir: Dir) =>
+  (post: Post): Future<void> =>
+    pipe(
+      post.images,
+      Future.traverseArray(image =>
+        pipe(
+          FsUtils.exists(getImageFile(postDir, image)),
+          Future.map(exists =>
+            exists
+              ? Maybe.none
+              : Maybe.some(`Missing expected image: ${image.fileName} - ${image.url}`),
           ),
         ),
       ),
-    ),
-    Future.map(List.compact),
-    Future.map(NonEmptyArray.fromReadonlyArray),
-    Future.chain(
-      Maybe.fold(
-        () => Future.unit, // no errors
-        flow(StringUtils.mkString('\n'), Error, Future.left),
+      Future.map(List.compact),
+      Future.map(NonEmptyArray.fromReadonlyArray),
+      Future.chain(
+        Maybe.fold(
+          () => Future.unit, // no errors
+          flow(StringUtils.mkString('\n'), Error, Future.left),
+        ),
       ),
-    ),
-    // Future.map<List<void>, void>(() => undefined),
-  )
+    )
 
 const fetchPost = (url: string, postId: PostId): Future<Post> =>
   pipe(

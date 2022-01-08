@@ -13,6 +13,7 @@ export const config = {
     maoureu: {
       dir: outputMaoureuDir,
       posts: { dir: pipe(outputMaoureuDir, Dir.joinDir('posts')) },
+      postsJson: pipe(outputMaoureuDir, Dir.joinFile('posts.json')),
     },
   },
 
