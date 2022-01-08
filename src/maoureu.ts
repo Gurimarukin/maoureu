@@ -79,7 +79,7 @@ const fetchPageHtmlsRec = (acc: List<string>, page: number): Future<List<string>
     GotUtils.getText(config.maoureu.page(page)),
     Future.chain(pageHtml => fetchPageHtmlsRec([...acc, pageHtml], page + 1)),
     Future.orElse(e => {
-      if (e instanceof HTTPError) {
+      if (e instanceof HTTPError && e.response.statusCode === 404) {
         console.debug(`Fetched ${page - 1} pages`)
         return Future.right(acc)
       }
