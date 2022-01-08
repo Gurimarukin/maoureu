@@ -2,6 +2,8 @@
   "extends": "@type-config/strict",
   "compilerOptions": {
     "outDir": "dist",
+    // "lib": [],
+    "noLib": true,
     "incremental": true,
     "sourceMap": true,
     "noEmit": true,
