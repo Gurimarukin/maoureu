@@ -8,11 +8,11 @@ const outputDir = Dir.of(path.join(__dirname, '..', 'output'))
 const outputMaoureuDir = pipe(outputDir, Dir.joinDir('maoureu'))
 const outputMaoureuIndexHtml = pipe(outputMaoureuDir, Dir.joinFile('index.html'))
 
-const maoureuIndexHtmlArgs: Pick<IndexHtmlArgs, 'title' | 'resetCss'> = {
+const maoureuIndexHtmlArgs: Pick<IndexHtmlArgs, 'title' | 'appCss'> = {
   title: 'Les Maoureuses',
-  resetCss: path.relative(
+  appCss: path.relative(
     outputMaoureuIndexHtml.dirname,
-    path.join(__dirname, 'webapp', 'reset.css'),
+    path.join(__dirname, 'webapp', 'css', 'app.css'),
   ),
 }
 

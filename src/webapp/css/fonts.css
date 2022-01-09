@@ -1,0 +1,40 @@
+@font-face {
+  font-family: 'Comili';
+  font-weight: 400;
+  src: url('../fonts/comili-book-webfont.woff2') format('woff2'),
+    url('../fonts/comili-book-webfont.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Comic Neue Angular';
+  font-weight: 400;
+  src: url('../fonts/comicneueangular-regular-webfont.woff2') format('woff2'),
+    url('../fonts/comicneueangular-regular-webfont.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Comic Neue Angular';
+  font-weight: 700;
+  src: url('../fonts/comicneueangular-bold-webfont.woff2') format('woff2'),
+    url('../fonts/comicneueangular-bold-webfont.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Comic Neue Angular';
+  font-style: italic;
+  font-style: oblique;
+  src: url('../fonts/comicneueangular-italic-webfont.woff2') format('woff2'),
+    url('../fonts/comicneueangular-italic-webfont.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Comic Neue Angular';
+  font-weight: 700;
+  font-style: italic;
+  src: url('../fonts/comicneueangular-bolditalic-webfont.woff2') format('woff2'),
+    url('../fonts/comicneueangular-bolditalic-webfont.woff') format('woff');
+}
+
+body {
+  font-family: 'Comic Neue Angular', 'Montserrat', 'Helvetica Neue', 'Helvetica', sans-serif;
+}

@@ -33,7 +33,7 @@ const writeHtml = (posts: List<Post>): Future<void> =>
     config.output.maoureu.indexHtml,
     indexHtml({
       title: config.maoureu.indexHtmlArgs.title,
-      resetCss: config.maoureu.indexHtmlArgs.resetCss,
+      appCss: config.maoureu.indexHtmlArgs.appCss,
       content: ReactDOMServer.renderToStaticMarkup(<MaoureuApp posts={posts} />),
     }),
   )
