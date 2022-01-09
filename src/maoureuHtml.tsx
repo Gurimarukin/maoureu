@@ -1,3 +1,5 @@
+import { ord, string } from 'fp-ts'
+import type { Ord } from 'fp-ts/Ord'
 import { pipe } from 'fp-ts/function'
 import React from 'react'
 import ReactDOMServer from 'react-dom/server'
@@ -5,13 +7,20 @@ import ReactDOMServer from 'react-dom/server'
 import { config } from './config'
 import { indexHtml } from './helpers/indexHtml'
 import { Post } from './models/Post'
+import { PostId } from './models/PostId'
 import { FsUtils } from './utils/FsUtils'
 import { JsonUtils } from './utils/JsonUtils'
 import { List } from './utils/fp'
 import { Future, Tuple } from './utils/fp'
 import { MaoureuApp } from './webapp/MaoureuApp'
 
-const main = (): Future<void> => pipe(getPosts(), Future.chain(writeHtml))
+const ordPostById: Ord<Post> = pipe(
+  string.Ord,
+  ord.contramap(({ id }) => PostId.unwrap(id)),
+)
+
+const main = (): Future<void> =>
+  pipe(getPosts(), Future.map(List.sort(ordPostById)), Future.chain(writeHtml))
 
 const getPosts = (): Future<List<Post>> =>
   pipe(

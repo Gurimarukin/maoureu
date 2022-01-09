@@ -4,12 +4,16 @@ import path from 'path'
 import type { IndexHtmlArgs } from './helpers/indexHtml'
 import { Dir } from './models/FileOrDir'
 
-const outputDir: Dir = Dir.of(path.join(__dirname, '..', 'output'))
+const outputDir = Dir.of(path.join(__dirname, '..', 'output'))
 const outputMaoureuDir = pipe(outputDir, Dir.joinDir('maoureu'))
+const outputMaoureuIndexHtml = pipe(outputMaoureuDir, Dir.joinFile('index.html'))
 
 const maoureuIndexHtmlArgs: Pick<IndexHtmlArgs, 'title' | 'resetCss'> = {
   title: 'Les Maoureuses',
-  resetCss: path.join('..', '..', 'src', 'webapp', 'reset.css'),
+  resetCss: path.relative(
+    outputMaoureuIndexHtml.dirname,
+    path.join(__dirname, 'webapp', 'reset.css'),
+  ),
 }
 
 export const config = {
@@ -19,7 +23,7 @@ export const config = {
     maoureu: {
       dir: outputMaoureuDir,
       posts: { dir: pipe(outputMaoureuDir, Dir.joinDir('posts')) },
-      indexHtml: pipe(outputMaoureuDir, Dir.joinFile('index.html')),
+      indexHtml: outputMaoureuIndexHtml,
       postsJson: pipe(outputMaoureuDir, Dir.joinFile('posts.json')),
     },
   },
