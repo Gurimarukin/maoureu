@@ -9,8 +9,15 @@ module.exports = {
     'plugin:@typescript-eslint/recommended',
     'plugin:functional/recommended',
     'plugin:fp-ts/all',
+    'plugin:react/recommended',
+    'plugin:react-hooks/recommended',
     'prettier',
   ],
+  settings: {
+    react: {
+      version: 'detect',
+    },
+  },
   reportUnusedDisableDirectives: true,
   rules: {
     '@typescript-eslint/array-type': ['warn', { default: 'array', readonly: 'generic' }],
@@ -123,6 +130,20 @@ module.exports = {
     'object-shorthand': 'warn',
     'prettier/prettier': 'off',
     quotes: ['warn', 'single', { avoidEscape: true, allowTemplateLiterals: true }],
+    'react/display-name': 'off',
+    'react/jsx-no-bind': [
+      'warn',
+      {
+        ignoreDOMComponents: false,
+        ignoreRefs: false,
+        allowArrowFunctions: false,
+        allowFunctions: false,
+        allowBind: false,
+      },
+    ],
+    'react/no-unescaped-entities': 'off',
+    'react/prop-types': 'off',
+    'react/self-closing-comp': ['warn', { component: true, html: true }],
     'sort-imports': [
       'warn',
       {
