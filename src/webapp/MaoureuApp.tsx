@@ -14,7 +14,7 @@ type MaoureuAppProps = {
 }
 
 export const MaoureuApp = ({ posts }: MaoureuAppProps): JSX.Element => (
-  <div>
+  <div className="bg-gray-600">
     {posts.map(post => (
       <PostComp key={PostId.unwrap(post.id)} post={post} />
     ))}
@@ -26,17 +26,24 @@ type PostProps = {
 }
 
 const PostComp = ({ post }: PostProps): JSX.Element => {
-  const [head, tail] = NonEmptyArray.unprepend(post.paragraphs)
+  const [head /* , tail */] = NonEmptyArray.unprepend(post.paragraphs)
   return (
-    <div>
-      <h1>{post.title}</h1>
-      <p>{head}</p>
-      {post.images.map(img => (
-        <img key={img.fileName} src={getImgSrc(post.id, img)} />
-      ))}
-      {tail.map((p, i) => (
+    <div className="w-[21cm] h-[29.7cm] p-6 bg-gray-50 border border-green-500">
+      <p className="text-center text-sm text-gray-400">{post.date}</p>
+      <a href={post.link} target="_blank" rel="noreferrer">
+        <h1 className="text-3xl text-center font-bold">{post.title}</h1>
+      </a>
+      <p className="mt-2 italic font-normal">{head}</p>
+      <div className="mt-2 grid grid-cols-2 gap-4">
+        {post.images.map(img => (
+          <div key={img.fileName} className="border border-black rounded overflow-hidden">
+            <img src={getImgSrc(post.id, img)} />
+          </div>
+        ))}
+      </div>
+      {/* {tail.map((p, i) => (
         <p key={i}>{p}</p>
-      ))}
+      ))} */}
     </div>
   )
 }

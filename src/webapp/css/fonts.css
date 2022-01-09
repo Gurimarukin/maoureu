@@ -22,7 +22,6 @@
 @font-face {
   font-family: 'Comic Neue Angular';
   font-style: italic;
-  font-style: oblique;
   src: url('../fonts/comicneueangular-italic-webfont.woff2') format('woff2'),
     url('../fonts/comicneueangular-italic-webfont.woff') format('woff');
 }
