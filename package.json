@@ -8,7 +8,7 @@
     "prebuild": "yarn run clean",
     "build": "tsc",
     "maoureuFetch": "NODE_OPTIONS='--unhandled-rejections=strict' ts-node src/maoureuFetch.ts",
-    "maoureuHtml": "NODE_OPTIONS='--unhandled-rejections=strict' ts-node src/maoureuHtml.ts",
+    "maoureuHtml": "NODE_OPTIONS='--unhandled-rejections=strict' ts-node src/maoureuHtml.tsx",
     "maoureuStart": "parcel output/maoureu/index.html --dist-dir build",
     "maoureuBuild": "parcel build output/maoureu/index.html --dist-dir build",
     "maoureu": "yarn run maoureuFetch && yarn run maoureuHtml && yarn run maoureuBuild",
