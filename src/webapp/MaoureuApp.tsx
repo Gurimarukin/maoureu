@@ -86,8 +86,8 @@ type PageProps = {
 
 const Page: React.FC<PageProps> = ({ postId, images, children }) => (
   <div
-    className="w-[29.7cm] h-[21cm] p-6 flex flex-col justify-between bg-gray-50 border-black"
-    style={{ borderTopWidth: 1 }} // wtf, tailwind?!
+    className="w-[29.7cm] h-[21cm] p-6 flex flex-col justify-between bg-gray-50"
+    style={{ borderTop: pageSeparator }}
   >
     {children}
     <div
@@ -112,7 +112,10 @@ const VerticalPost = ({ post }: VerticalPostProps): JSX.Element => {
   const image = NonEmptyArray.head(post.images)
   return (
     <div className="w-[29.7cm] h-[21cm] flex justify-center items-center rotate-[-90deg]">
-      <div className={`w-[21cm] h-[29.7cm] flex flex-col p-6 bg-gray-50`}>
+      <div
+        className={`w-[21cm] h-[29.7cm] flex flex-col p-6 bg-gray-50`}
+        style={{ borderRight: pageSeparator }}
+      >
         <div className="grow-0 flex items-start">
           <a href={post.link} target="_blank" rel="noreferrer">
             <h1 className="text-3xl font-bold">{post.title}</h1>
@@ -132,6 +135,9 @@ const VerticalPost = ({ post }: VerticalPostProps): JSX.Element => {
     </div>
   )
 }
+
+// const pageSeparator = '1px solid black'
+const pageSeparator = 'none'
 
 const getImgSrc = (fileName: string): string =>
   pipe(
