@@ -25,7 +25,7 @@ const parseFile =
   <A>([decoder, decoderName]: Tuple<Decoder<unknown, A>, string>) =>
   (file: File): Future<A> =>
     pipe(
-      FsUtils.readFile(file),
+      FsUtils.readFileString(file),
       Future.map(json.parse),
       Future.map(Either.mapLeft(unknownToError)),
       Future.chain(Future.fromEither),

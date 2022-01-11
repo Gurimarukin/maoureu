@@ -7,6 +7,13 @@ import { FileOrDir } from '../models/FileOrDir'
 import type { Dir, File } from '../models/FileOrDir'
 import { Future, List, Maybe } from './fp'
 
+export type FileWritable =
+  | string
+  | NodeJS.ArrayBufferView
+  | Iterable<string | NodeJS.ArrayBufferView>
+  | AsyncIterable<string | NodeJS.ArrayBufferView>
+  | Stream
+
 const exists = (f: FileOrDir): Future<boolean> => pipe(stat(f), Future.map(Maybe.isSome))
 
 const mkdir = (dir: Dir, options?: fs.MakeDirectoryOptions): Future<void> =>
@@ -21,7 +28,10 @@ const readdir = (dir: Dir): Future<List<FileOrDir>> =>
     Future.map(List.map(FileOrDir.fromDirent(dir))),
   )
 
-const readFile = (file: File): Future<string> =>
+const readFileBuffer = (file: File): Future<Buffer> =>
+  Future.tryCatch(() => fs.promises.readFile(file.path))
+
+const readFileString = (file: File): Future<string> =>
   Future.tryCatch(() => fs.promises.readFile(file.path, { encoding: 'utf-8' }))
 
 const rmrf = (f: FileOrDir, options: rimraf.Options = {}): Future<void> =>
@@ -43,21 +53,15 @@ const stat = (f: FileOrDir): Future<Maybe<fs.Stats>> =>
     Future.orElse(() => Future.right<Maybe<fs.Stats>>(Maybe.none)),
   )
 
-const writeFile = (
-  file: File,
-  data:
-    | string
-    | NodeJS.ArrayBufferView
-    | Iterable<string | NodeJS.ArrayBufferView>
-    | AsyncIterable<string | NodeJS.ArrayBufferView>
-    | Stream,
-): Future<void> => Future.tryCatch(() => fs.promises.writeFile(file.path, data))
+const writeFile = (file: File, data: FileWritable): Future<void> =>
+  Future.tryCatch(() => fs.promises.writeFile(file.path, data))
 
 export const FsUtils = {
   exists,
   mkdir,
   readdir,
-  readFile,
+  readFileBuffer,
+  readFileString,
   rmrf,
   stat,
   writeFile,

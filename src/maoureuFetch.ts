@@ -140,7 +140,7 @@ const writePost =
           post.images,
           Future.traverseSeqArray(image =>
             pipe(
-              HttpUtils.getBuffer(image.url),
+              HttpUtils.getBuffer(image.url, { cached: true }),
               Future.chain(buffer => FsUtils.writeFile(getImageFile(postDir, image), buffer)),
             ),
           ),
