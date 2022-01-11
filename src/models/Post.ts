@@ -80,6 +80,7 @@ const parseParagraphs = (domHandler: DomHandler): Validation<NonEmptyArray<strin
       ),
     ),
     Either.chain(([head, ...tail]) => apply.sequenceT(Validation.validation)(head, ...tail)),
+    Either.map(NonEmptyArray.chain(string.split('\n\n'))),
   )
 }
 
