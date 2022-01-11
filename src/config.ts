@@ -3,6 +3,7 @@ import path from 'path'
 
 import type { IndexHtmlArgs } from './helpers/indexHtml'
 import { Dir, File } from './models/FileOrDir'
+import { PostId } from './models/PostId'
 
 // assuming cwd is projet root
 
@@ -38,6 +39,8 @@ export const config = {
       images: { dir: pipe(maoureuWebappDir, Dir.joinDir('images')) },
     },
     imagesPerPage: 6,
+    justifyCenterLimit: 2, // inclusive limit (<=)
+    tikvaWolfPostId: PostId.wrap('2021_07_21_special-cest-quoi-le-consentement-par-tikva-wolf'),
     urls: {
       page: (i: number): string => `https://maour.eu/page/${i}`,
     },

@@ -3,3 +3,7 @@
 @tailwind utilities;
 
 @import 'fonts.css';
+
+.post-paragraph a {
+  text-decoration: underline;
+}
