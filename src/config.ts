@@ -37,6 +37,7 @@ export const config = {
       dir: maoureuWebappDir,
       images: { dir: pipe(maoureuWebappDir, Dir.joinDir('images')) },
     },
+    imagesPerPage: 6,
     urls: {
       page: (i: number): string => `https://maour.eu/page/${i}`,
     },

@@ -5,7 +5,7 @@ import type { Newtype } from 'newtype-ts'
 import { iso } from 'newtype-ts'
 
 import { StringUtils } from '../utils/StringUtils'
-import { Maybe } from '../utils/fp'
+import { List, Maybe } from '../utils/fp'
 import { fromNewtype } from '../utils/ioTsUtils'
 
 export type PostId = Newtype<{ readonly PostId: unique symbol }, string>
@@ -19,12 +19,11 @@ const Eq: eq.Eq<PostId> = pipe(string.Eq, eq.contramap(unwrap))
 const urlRegex = /^https?:\/\/[^\/]+(.*)$/
 const fromUrl: (url: string) => Maybe<PostId> = flow(
   StringUtils.matcher1(urlRegex),
-  Maybe.map(str =>
-    pipe(
-      str
-        .trim()
-        .split('/')
-        .filter(s => s !== ''),
+  Maybe.map(
+    flow(
+      string.trim,
+      string.split('/'),
+      List.filter(s => s !== ''),
       StringUtils.mkString('_'),
       StringUtils.cleanFileName,
       wrap,

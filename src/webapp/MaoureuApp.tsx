@@ -1,5 +1,5 @@
 import { pipe } from 'fp-ts/function'
-import React from 'react'
+import React, { Fragment } from 'react'
 
 import { config } from '../config'
 import { Dir, File } from '../models/FileOrDir'
@@ -23,40 +23,60 @@ export const MaoureuApp = ({ posts }: MaoureuAppProps): JSX.Element => (
         mercredi
       </p>
     </div>
-    {posts.map(post => (
-      <PostComp key={PostId.unwrap(post.id)} post={post} />
-    ))}
+    {posts.map(({ images, ...post }) => {
+      const [head, tail] = pipe(
+        images,
+        NonEmptyArray.chunksOf(config.maoureu.imagesPerPage),
+        NonEmptyArray.unprepend,
+      )
+      return (
+        <Fragment key={PostId.unwrap(post.id)}>
+          <PostComp post={post} images={head} />
+          {tail.map(imgs => (
+            <Page key={NonEmptyArray.head(imgs).fileName} postId={post.id} images={imgs} />
+          ))}
+        </Fragment>
+      )
+    })}
   </div>
 )
 
 type PostProps = {
-  readonly post: Post
+  readonly post: Omit<Post, 'images'>
+  readonly images: Post['images']
 }
 
-const PostComp = ({ post }: PostProps): JSX.Element => {
-  const [head /* , tail */] = NonEmptyArray.unprepend(post.paragraphs)
-  return (
-    <div className="w-[29.7cm] h-[21cm] p-6 bg-gray-50 border border-green-500">
-      <div className="flex">
-        <a href={post.link} target="_blank" rel="noreferrer" className="grow-0 shrink-0">
-          <h1 className="text-3xl text-center font-bold">{post.title}</h1>
-        </a>
-        <p className="grow-0 shrink-0 mx-8 mt-2 text-center text-sm text-gray-400">{post.date}</p>
-        <p className="grow text-right italic font-normal whitespace-pre-wrap">{head}</p>
-      </div>
-      <div className="mt-2 grid grid-cols-3 gap-4">
-        {post.images.map(img => (
-          <div key={img.fileName} className="border border-black rounded overflow-hidden">
-            <img src={getPostImgSrc(post.id, img)} />
-          </div>
-        ))}
-      </div>
-      {/* {tail.map((p, i) => (
-        <p key={i}>{p}</p>
-      ))} */}
+const PostComp = ({ post, images }: PostProps): JSX.Element => (
+  <Page postId={post.id} images={images}>
+    <div className="flex">
+      <a href={post.link} target="_blank" rel="noreferrer" className="grow-0 shrink-0">
+        <h1 className="text-3xl text-center font-bold">{post.title}</h1>
+      </a>
+      <p className="grow-0 shrink-0 mx-8 mt-2 text-center text-sm text-gray-400">{post.date}</p>
+      <p className="grow text-right italic font-normal whitespace-pre-wrap">
+        {NonEmptyArray.head(post.paragraphs)}
+      </p>
     </div>
-  )
+  </Page>
+)
+
+type PageProps = {
+  readonly postId: PostId
+  readonly images: NonEmptyArray<PostImage>
 }
+
+const Page: React.FC<PageProps> = ({ postId, images, children }) => (
+  <div className="w-[29.7cm] h-[21cm] p-6 bg-gray-50 border border-green-500">
+    {children}
+    <div className="mt-2 grid grid-cols-3 gap-4">
+      {images.map(img => (
+        <div key={img.fileName} className="border border-black rounded overflow-hidden">
+          <img src={getPostImgSrc(postId, img)} />
+        </div>
+      ))}
+    </div>
+  </div>
+)
 
 const getImgSrc = (fileName: string): string =>
   pipe(

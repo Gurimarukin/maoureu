@@ -1,10 +1,10 @@
-import { apply, number, ord } from 'fp-ts'
+import { apply, number, ord, string } from 'fp-ts'
 import type { Ord } from 'fp-ts/Ord'
 import { flow, pipe } from 'fp-ts/function'
 import * as C from 'io-ts/Codec'
 
 import { DomHandler } from '../helpers/DomHandler'
-import { List, Maybe, NonEmptyArray } from '../utils/fp'
+import { Maybe, NonEmptyArray } from '../utils/fp'
 import { Either } from '../utils/fp'
 import type { SrcSetDefinition } from '../utils/parseSrcset'
 import { parseSrcset } from '../utils/parseSrcset'
@@ -22,7 +22,7 @@ export const PostImage = {
   codec: postImageCodec,
   fromUrl: (url: string): PostImage => ({
     url,
-    fileName: pipe(url.split('/'), List.last, Maybe.getUnsafe),
+    fileName: pipe(url, string.split('/'), NonEmptyArray.last),
   }),
 }
 
