@@ -2,19 +2,15 @@ import { pipe } from 'fp-ts/function'
 import path from 'path'
 
 import type { IndexHtmlArgs } from './helpers/indexHtml'
-import { Dir } from './models/FileOrDir'
+import { Dir, File } from './models/FileOrDir'
 
-const outputDir = Dir.of(path.join(__dirname, '..', 'output'))
+// assuming cwd is projet root
+
+const outputDir = Dir.of(path.resolve('output'))
 const outputMaoureuDir = pipe(outputDir, Dir.joinDir('maoureu'))
 const outputMaoureuIndexHtml = pipe(outputMaoureuDir, Dir.joinFile('index.html'))
 
-const maoureuIndexHtmlArgs: Pick<IndexHtmlArgs, 'title' | 'appCss'> = {
-  title: 'Les Maoureuses',
-  appCss: path.relative(
-    outputMaoureuIndexHtml.dirname,
-    path.join(__dirname, 'webapp', 'css', 'app.css'),
-  ),
-}
+const maoureuWebappDir = Dir.of(path.resolve('src', 'webapp'))
 
 export const config = {
   output: {
@@ -30,7 +26,17 @@ export const config = {
 
   maoureu: {
     descriptionJson: 'description.json',
-    indexHtmlArgs: maoureuIndexHtmlArgs,
+    indexHtmlArgs: ((): Pick<IndexHtmlArgs, 'title' | 'appCss'> => ({
+      title: 'Les Maoureuses',
+      appCss: pipe(
+        File.dir(outputMaoureuIndexHtml),
+        Dir.relative(pipe(maoureuWebappDir, Dir.joinFile('css', 'app.css'))),
+      ),
+    }))(),
+    webapp: {
+      dir: maoureuWebappDir,
+      images: { dir: pipe(maoureuWebappDir, Dir.joinDir('images')) },
+    },
     urls: {
       page: (i: number): string => `https://maour.eu/page/${i}`,
     },

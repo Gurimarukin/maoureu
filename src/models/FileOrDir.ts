@@ -1,26 +1,25 @@
-import { pipe } from 'fp-ts/function'
 import type fs from 'fs'
 import nodePath from 'path'
 
+import { createUnion } from '../utils/createUnion'
 import type { List } from '../utils/fp'
-import { IO } from '../utils/fp'
 
-export type FileOrDir = File | Dir
-
-export type File = {
-  readonly _tag: 'File'
+type FileArgs = {
   readonly path: string
   readonly basename: string
   readonly dirname: string
 }
 
-export type Dir = {
-  readonly _tag: 'Dir'
-  readonly path: string
-}
+const u = createUnion({
+  File: (args: FileArgs) => args,
+  Dir: (path: string) => ({ path }),
+})
 
-const isFile = (f: FileOrDir): f is File => f._tag === 'File'
-const isDir = (f: FileOrDir): f is Dir => f._tag === 'Dir'
+export type FileOrDir = typeof u.T
+
+export type File = typeof u.File.T
+
+export type Dir = typeof u.Dir.T
 
 const fromDirent =
   (parent: Dir) =>
@@ -31,42 +30,41 @@ const fromDirent =
       : File.of({ path, basename: f.name, dirname: parent.path })
   }
 
-export const FileOrDir = { isFile, isDir, fromDirent }
+export const FileOrDir = { fromDirent }
 
-const fileFromPath = (path: string): File =>
-  File.of({
-    path,
-    basename: nodePath.basename(path),
-    dirname: nodePath.dirname(path),
-  })
+const fileOf: (args: FileArgs) => File = u.File
 
 export const File = {
-  of: ({ path, basename, dirname }: Omit<File, '_tag'>): File => ({
-    _tag: 'File',
-    path,
-    basename,
-    dirname,
-  }),
-  fromPath: fileFromPath,
-  setBasename:
-    (basename: string) =>
-    (file: File): File =>
-      fileFromPath(nodePath.join(file.dirname, basename)),
+  of: fileOf,
+  fromPath: (path: string): File =>
+    File.of({
+      path,
+      basename: nodePath.basename(path),
+      dirname: nodePath.dirname(path),
+    }),
+  dir: (file: File): Dir => Dir.of(file.dirname),
   stringify: ({ path, basename, dirname }: File): string =>
     `File(${path}, ${basename}, ${dirname})`,
 }
 
-const dirOf = (path: string): Dir => ({ _tag: 'Dir', path })
+const dirOf: (path: string) => Dir = u.Dir
+
+function dirRelative(to: File): (from: Dir) => File
+function dirRelative(to: Dir): (from: Dir) => Dir
+function dirRelative(to: FileOrDir): (from: Dir) => FileOrDir {
+  return from => {
+    const path = nodePath.relative(from.path, to.path)
+    switch (to.type) {
+      case 'Dir':
+        return Dir.of(path)
+      case 'File':
+        return File.fromPath(path)
+    }
+  }
+}
 
 export const Dir = {
   of: dirOf,
-  resolveDir:
-    (path: string, ...paths: List<string>) =>
-    (dir: Dir): IO<Dir> =>
-      pipe(
-        IO.tryCatch(() => nodePath.resolve(dir.path, path, ...paths)),
-        IO.map(dirOf),
-      ),
   joinDir:
     (path: string, ...paths: List<string>) =>
     (dir: Dir): Dir =>
@@ -75,4 +73,5 @@ export const Dir = {
     (path: string, ...paths: List<string>) =>
     (dir: Dir): File =>
       File.fromPath(nodePath.join(dir.path, path, ...paths)),
+  relative: dirRelative,
 }
