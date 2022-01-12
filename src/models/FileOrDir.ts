@@ -30,7 +30,7 @@ const fromDirent =
       : File.of({ path, basename: f.name, dirname: parent.path })
   }
 
-export const FileOrDir = { fromDirent }
+export const FileOrDir = { fromDirent, isFile: u.is('File'), isDir: u.is('Dir') }
 
 const fileOf: (args: FileArgs) => File = u.File
 
